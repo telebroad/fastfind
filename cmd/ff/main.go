@@ -50,6 +50,16 @@ Searching contents — these flags mean what they mean in grep(1)
   -B <n>        also print n lines before each match
   -C <n>        both, n lines either side
 
+Config files, without printing what is in them
+  -json         describe JSON files: every key path, no values
+  -get <path>   print ONE value, by dotted path: -get db.host config.json
+  -mask         in -g output, hide the values and keep the keys
+
+  A value is shown only when it cannot carry a secret — a bool, a null.
+  Everything else becomes its type and its length, and anything under a key
+  named like a credential is refused outright. Made for reading a config in
+  front of somebody, or in a session whose transcript is stored.
+
 Output
   -abs          absolute paths rather than paths relative to the root
   -0            NUL-separated, for xargs -0
@@ -72,6 +82,10 @@ Examples
   ff -g panic -l                    just the files that panic
   ff -g 'err != nil' -c             how often each file checks an error
   ff -cores 2 -g X                  leave the rest of the machine alone
+  ff -json config.json              what keys are in here? (no values)
+  ff -json '*.json'                 ...across every JSON file below here
+  ff -get database.host cfg.json    one value, deliberately
+  ff -g PASSWORD -mask -name '.env' find the key, not the secret
 `
 
 // Exit codes follow grep: 0 found, 1 not found, 2 something was wrong with the
@@ -111,6 +125,10 @@ func run() int {
 		before     = flag.Int("B", 0, "lines before each match")
 		around     = flag.Int("C", 0, "lines either side of each match")
 
+		asJSON  = flag.Bool("json", false, "describe JSON files without printing their values")
+		getPath = flag.String("get", "", "print one value from a JSON file, by dotted path")
+		mask    = flag.Bool("mask", false, "hide values in matched lines")
+
 		abs   = flag.Bool("abs", false, "absolute paths")
 		zero  = flag.Bool("0", false, "NUL-separated")
 		quiet = flag.Bool("q", false, "paths only, no summary line")
@@ -149,7 +167,10 @@ func run() int {
 	if searching && loose != "" && *nameGlob == "" {
 		*nameGlob = loose
 	}
-	if !searching && loose == "" {
+	if *asJSON && loose == "" {
+		loose = "*.json"
+	}
+	if !searching && !*asJSON && loose == "" {
 		flag.Usage()
 		return exitUsage
 	}
@@ -187,6 +208,7 @@ func run() int {
 		abs:     *abs,
 		zero:    *zero,
 		numbers: *numbers,
+		mask:    *mask,
 		color:   useColor(*color),
 	}
 
@@ -201,7 +223,16 @@ func run() int {
 		multiple = "matches"
 	)
 
-	if searching {
+	// -get is the deliberate escape hatch and takes one file, so it is settled
+	// before anything walks.
+	if *getPath != "" {
+		return showValue(loose, *getPath, out)
+	}
+
+	if *asJSON {
+		matched, scanned = describeJSON(query, show)
+		one, multiple = "key", "keys"
+	} else if searching {
 		matcher, err := grep.Compile(grep.Options{
 			Pattern:    *pattern,
 			Fixed:      *fixed,

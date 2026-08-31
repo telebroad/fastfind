@@ -85,6 +85,78 @@ Two things it does that `grep` on Windows doesn't:
   `computed(` or `foo[0]` is the most common thing anyone types, and every one of
   those is a broken regex. The error names the fix rather than just the fault.
 
+## Reading config files without leaking them
+
+`grep` has no idea what JSON is, and `jq` prints values by default — so the
+normal way to find out what is in a config file is also the way to put its
+credentials on your screen. In a terminal that is bad. In a session with an AI
+assistant it is worse, because the transcript is stored: a secret that reaches
+the screen has been written down somewhere it will outlive the reason it was
+shown.
+
+`ff` fails **closed**.
+
+```bash
+ff -json config.json     # every key path, no values
+```
+
+```
+config.json
+  api                 object(3 keys)
+  api.debug           bool = true
+  api.endpoints       array(2)
+  api.endpoints[0]    string(17)
+  api.token           string(20)  ** redacted: key looks like a credential **
+  database.host       string(11)
+  database.password   string(19)  ** redacted: key looks like a credential **
+  database.port       number(4)
+  logging.sinks       array(0)
+```
+
+That answers the questions actually being asked — *is the key there, is it set,
+is it the right shape* — without answering *what is it*. A value is printed only
+when it cannot carry a secret: a `bool` has two possible values, `null` is the
+absence of one. Everything else becomes a type and a length. Numbers are
+redacted too, which looks over-cautious until you remember that account numbers
+and PINs are numbers.
+
+It composes with the finder, so `ff -json` with no argument describes every
+JSON file below you — 6,930 keys across a project in 72ms.
+
+### Getting one value on purpose
+
+```bash
+ff -get database.host config.json      # db.internal
+ff -get 'api.endpoints[1]' config.json # array indexing works
+ff -get database.password config.json  # prints it, and warns you it did
+```
+
+Separate from `-json` deliberately. Reading the shape of a config is casual and
+safe; reading a value out of one is neither, and the two should not end up one
+keystroke apart.
+
+### Masking a search
+
+`ff -g password` over a config file would print the line, secret included. `-mask`
+keeps the keys and hides the values:
+
+```bash
+ff -g 'password|token' -mask config.json
+```
+
+```
+config.json:  "database": {"host":<11 chars>,"port":<4 chars>,"password":<19 chars>},
+.env:DB_PASSWORD= <19 chars>
+.env:DEBUG=true
+```
+
+Each value is masked separately, so the structure and the keys survive — masking
+everything after the first colon would be safe but useless. `DEBUG=true` is left
+alone; there is no secret in a boolean. The length stays because it separates *the
+setting is empty* from *the setting is filled in*. Nothing else does — not a
+prefix, not a suffix. The first character of a password is a character of a
+password.
+
 ## All the options
 
 ```

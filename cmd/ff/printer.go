@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/telebroad/fastfind/internal/grep"
+	"github.com/telebroad/fastfind/internal/redact"
 )
 
 // ANSI, kept to the four colours a 1980s terminal had, because those are the
@@ -28,6 +29,7 @@ type printer struct {
 	abs     bool
 	zero    bool
 	numbers bool
+	mask    bool
 	color   bool
 }
 
@@ -122,6 +124,12 @@ func (p *printer) block(found *grep.FileResult) {
 			}
 		}
 
+		if p.mask {
+			// The key stays visible, because the key is what was being looked
+			// for. What follows the separator does not.
+			fmt.Fprintf(p.out, "%s%s\n", head.String(), redact.MaskLine(line.Text))
+			continue
+		}
 		fmt.Fprintf(p.out, "%s%s\n", head.String(), p.highlight(line))
 	}
 }
@@ -142,4 +150,33 @@ func (p *printer) highlight(line grep.Line) string {
 	return line.Text[:line.Start] +
 		ansiMatch + line.Text[line.Start:line.End] + ansiReset +
 		line.Text[line.End:]
+}
+
+// keys prints one file's shape: every key path, with its value described.
+func (p *printer) keys(full string, entries []redact.Entry) {
+	shown := p.display(full)
+
+	if p.color {
+		fmt.Fprintf(p.out, "%s%s%s\n", ansiPath, shown, ansiReset)
+	} else {
+		fmt.Fprintln(p.out, shown)
+	}
+
+	// The paths are already the longest thing on the line, so the detail is
+	// aligned past the widest of them rather than at a guessed column.
+	width := 0
+	for _, item := range entries {
+		if len(item.Path) > width {
+			width = len(item.Path)
+		}
+	}
+
+	for _, item := range entries {
+		detail := item.Detail
+		if p.color && item.Redacted {
+			detail = ansiMatch + detail + ansiReset
+		}
+		fmt.Fprintf(p.out, "  %-*s  %s\n", width, item.Path, detail)
+	}
+	fmt.Fprintln(p.out)
 }
