@@ -1,0 +1,10 @@
+# The built binary. Anchored with a leading slash, or the bare name `ff` also
+# matches the cmd/ff DIRECTORY and quietly excludes the whole command from the
+# repository.
+/ff
+/ff.exe
+/dist/
+
+# Go
+*.test
+*.out

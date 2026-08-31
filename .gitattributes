@@ -1,0 +1,8 @@
+# Normalise to LF in the repository. Without this a commit made on Windows
+# carries CRLF into the tree, and the gofmt check in CI — which runs on Linux —
+# then fails on files that are perfectly well formatted.
+* text=auto eol=lf
+
+# Never touch these.
+*.png binary
+*.exe binary
