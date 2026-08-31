@@ -16,6 +16,10 @@ Measured against GNU `find` on the same tree, returning the same 165 results:
 | A 1.9M-entry user profile | — | **4.2s** (~450k entries/sec) |
 | One file in a mid-sized repo | — | **15ms** |
 
+**[Documentation is in the wiki](https://github.com/telebroad/fastfind/wiki)** —
+a cookbook, how it works, what happens on filesystems other than NTFS, and how to
+make it the default search in Claude Code.
+
 ## Install
 
 ```bash
