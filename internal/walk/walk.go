@@ -97,10 +97,7 @@ func Cores(requested int) int {
 	if requested > 0 {
 		return requested
 	}
-	if spare := runtime.NumCPU() - 1; spare > 0 {
-		return spare
-	}
-	return 1
+	return max(runtime.NumCPU()-1, 1)
 }
 
 // Result is one match.
@@ -154,10 +151,7 @@ func Walk(q Query, emit func(Result)) (scanned int64) {
 	// really does stay small rather than quietly running 128 workers on one
 	// core.
 	cores := Cores(q.Cores)
-	workers := cores * 8
-	if workers > 256 {
-		workers = 256
-	}
+	workers := min(cores*8, 256)
 
 	var (
 		queue   = make(chan string, 4096)
@@ -186,15 +180,13 @@ func Walk(q Query, emit func(Result)) (scanned int64) {
 	}
 
 	var workGroup sync.WaitGroup
-	for i := 0; i < workers; i++ {
-		workGroup.Add(1)
-		go func() {
-			defer workGroup.Done()
+	for range workers {
+		workGroup.Go(func() {
 			for dir := range queue {
 				walkOne(q, dir, push, emit, &found, &files, halt, stop)
 				pending.Done()
 			}
-		}()
+		})
 	}
 
 	push(q.Root)

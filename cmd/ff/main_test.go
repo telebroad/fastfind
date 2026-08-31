@@ -40,18 +40,12 @@ func TestChooseRootRefusesTwoStartingPoints(t *testing.T) {
 func TestChooseRootMakesThePathAbsolute(t *testing.T) {
 	dir := t.TempDir()
 
-	// Windows will not delete a directory that a process is sitting in, so the
-	// working directory has to be restored before t.TempDir's cleanup runs —
-	// otherwise the test passes and then fails during teardown.
-	here, err := os.Getwd()
-	if err != nil {
-		t.Fatalf("getwd: %v", err)
-	}
-	t.Cleanup(func() { _ = os.Chdir(here) })
+	// t.Chdir restores the previous directory when the test ends, which matters
+	// on Windows: it will not delete a directory a process is sitting in, so a
+	// hand-rolled chdir leaves t.TempDir's cleanup failing after the test has
+	// already passed.
+	t.Chdir(dir)
 
-	if err := os.Chdir(dir); err != nil {
-		t.Skipf("cannot change directory: %v", err)
-	}
 	if err := os.Mkdir("sub", 0o755); err != nil {
 		t.Fatalf("mkdir: %v", err)
 	}

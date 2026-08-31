@@ -3,7 +3,7 @@ package walk
 import (
 	"os"
 	"path/filepath"
-	"sort"
+	"slices"
 	"sync"
 	"testing"
 )
@@ -56,7 +56,7 @@ func gather(t *testing.T, q Query) []string {
 		}
 		hits = append(hits, filepath.ToSlash(rel))
 	})
-	sort.Strings(hits)
+	slices.Sort(hits)
 	return hits
 }
 
@@ -195,7 +195,7 @@ func TestWalkHandlesATreeDeeperThanTheQueue(t *testing.T) {
 	// block trying to enqueue and nobody is left to drain.
 	var paths []string
 	deep := ""
-	for i := 0; i < 200; i++ {
+	for range 200 {
 		deep = filepath.ToSlash(filepath.Join(deep, "d"))
 		paths = append(paths, deep+"/f.go")
 	}

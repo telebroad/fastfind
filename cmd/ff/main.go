@@ -192,10 +192,13 @@ func run() int {
 
 	started := time.Now()
 
+	// Both forms, because English does not pluralise by adding an s: "match"
+	// becomes "matches", and deriving it gave "5 matchs".
 	var (
-		matched int
-		scanned int64
-		unit    = "match"
+		matched  int
+		scanned  int64
+		one      = "match"
+		multiple = "matches"
 	)
 
 	if searching {
@@ -213,9 +216,9 @@ func run() int {
 			return exitUsage
 		}
 		matched, scanned = searchContents(query, matcher, show, *listOnly, *countOnly)
-		unit = "line"
+		one, multiple = "line", "lines"
 		if *listOnly || *countOnly {
-			unit = "file"
+			one, multiple = "file", "files"
 		}
 	} else {
 		matched, scanned = searchNames(query, show)
@@ -224,7 +227,7 @@ func run() int {
 	if !*quiet {
 		out.Flush()
 		fmt.Fprintf(os.Stderr, "\n%d %s in %s — %s scanned on %d %s\n",
-			matched, plural(matched, unit, unit+"s"),
+			matched, plural(matched, one, multiple),
 			time.Since(started).Round(time.Millisecond),
 			formatCount(scanned), allowed, plural(allowed, "core", "cores"))
 	}
