@@ -65,6 +65,7 @@ Output
   -0            NUL-separated, for xargs -0
   -q            paths only, no summary line
   -color <when> always | never | auto (default: auto — on when a terminal)
+  -version      which build this is, and what it was built from
 
 Skipped unless -all: node_modules, .git, .angular, .next, .nuxt, .gradle,
 .venv, venv, __pycache__, vendor, target, dist, build, Windows, WinSxS,
@@ -133,9 +134,19 @@ func run() int {
 		zero  = flag.Bool("0", false, "NUL-separated")
 		quiet = flag.Bool("q", false, "paths only, no summary line")
 		color = flag.String("color", "auto", "always | never | auto")
+
+		showVersion = flag.Bool("version", false, "print the version and exit")
 	)
 	flag.Usage = func() { fmt.Fprint(os.Stderr, usage) }
 	flag.Parse()
+
+	// Answered before anything else can fail. "What am I running?" is usually
+	// asked *because* something else has already gone wrong, so it must not
+	// depend on the rest of the arguments making sense.
+	if *showVersion {
+		fmt.Print(version())
+		return exitFound
+	}
 
 	root, err := chooseRoot(*in, *home)
 	if err != nil {

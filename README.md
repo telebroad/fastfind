@@ -184,6 +184,7 @@ Output
   -0            NUL-separated, for xargs -0
   -q            no summary line
   -color <when> always | never | auto (default: auto)
+  -version      which build this is, and what it was built from
 ```
 
 A **name** pattern matches anywhere in the name and ignores case; give it `*` or
