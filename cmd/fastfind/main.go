@@ -1,4 +1,4 @@
-// Command ff searches for files by name, or inside them by content.
+// Command fastfind searches for files by name, or inside them by content.
 package main
 
 import (
@@ -15,11 +15,11 @@ import (
 	"github.com/telebroad/fastfind/internal/walk"
 )
 
-const usage = `ff — find files, and search inside them
+const usage = `fastfind — find files, and search inside them
 
-  ff <pattern>                 find by name, under the current directory
-  ff -g <regex>                search file CONTENTS, like grep -r
-  ff -g <regex> -name '*.go'   ...only inside files whose name matches
+  fastfind <pattern>                 find by name, under the current directory
+  fastfind -g <regex>                search file CONTENTS, like grep -r
+  fastfind -g <regex> -name '*.go'   ...only inside files whose name matches
 
 Where to look
   -in <dir>     start here (default: the current directory)
@@ -75,21 +75,21 @@ Google Drive and OneDrive project. Following those is how a search never
 returns.
 
 Examples
-  ff cache.go                       this file, somewhere below here
-  ff -home '*.pem'                  every key in the profile
-  ff -g 'func main' -name '*.go'    where main is defined
-  ff -g TODO -i -n                  every TODO, with line numbers
-  ff -g panic -l                    just the files that panic
-  ff -g 'err != nil' -c             how often each file checks an error
-  ff -cores 2 -g X                  leave the rest of the machine alone
-  ff -json config.json              what keys are in here? (no values)
-  ff -json '*.json'                 ...across every JSON file below here
-  ff -get database.host cfg.json    one value, deliberately
-  ff -g PASSWORD -mask -name '.env' find the key, not the secret
+  fastfind cache.go                       this file, somewhere below here
+  fastfind -home '*.pem'                  every key in the profile
+  fastfind -g 'func main' -name '*.go'    where main is defined
+  fastfind -g TODO -i -n                  every TODO, with line numbers
+  fastfind -g panic -l                    just the files that panic
+  fastfind -g 'err != nil' -c             how often each file checks an error
+  fastfind -cores 2 -g X                  leave the rest of the machine alone
+  fastfind -json config.json              what keys are in here? (no values)
+  fastfind -json '*.json'                 ...across every JSON file below here
+  fastfind -get database.host cfg.json    one value, deliberately
+  fastfind -g PASSWORD -mask -name '.env' find the key, not the secret
 `
 
 // Exit codes follow grep: 0 found, 1 not found, 2 something was wrong with the
-// asking. That is what makes `ff -q x && echo yes` work in a shell.
+// asking. That is what makes `fastfind -q x && echo yes` work in a shell.
 const (
 	exitFound    = 0
 	exitNotFound = 1
@@ -139,7 +139,7 @@ func run() int {
 
 	root, err := chooseRoot(*in, *home)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "ff:", err)
+		fmt.Fprintln(os.Stderr, "fastfind:", err)
 		return exitUsage
 	}
 
@@ -162,7 +162,7 @@ func run() int {
 	searching := *pattern != ""
 	loose := strings.Join(flag.Args(), " ")
 
-	// `ff -g foo '*.go'` is a reasonable thing to type. Take the loose argument
+	// `fastfind -g foo '*.go'` is a reasonable thing to type. Take the loose argument
 	// as the name filter rather than ignoring it in silence.
 	if searching && loose != "" && *nameGlob == "" {
 		*nameGlob = loose
@@ -194,7 +194,7 @@ func run() int {
 
 	if query.Glob {
 		if _, err := filepath.Match(namePattern, "probe"); err != nil {
-			fmt.Fprintf(os.Stderr, "ff: %q is not a valid pattern: %v\n", namePattern, err)
+			fmt.Fprintf(os.Stderr, "fastfind: %q is not a valid pattern: %v\n", namePattern, err)
 			return exitUsage
 		}
 	}
@@ -243,7 +243,7 @@ func run() int {
 			After:      *after,
 		})
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "ff:", err)
+			fmt.Fprintln(os.Stderr, "fastfind:", err)
 			return exitUsage
 		}
 		matched, scanned = searchContents(query, matcher, show, *listOnly, *countOnly)

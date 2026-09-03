@@ -60,25 +60,25 @@ func describeJSON(query walk.Query, show *printer) (matched int, scanned int64) 
 // apart.
 func showValue(file, path string, out io.Writer) int {
 	if file == "" {
-		fmt.Fprintln(os.Stderr, "ff: -get needs a file: ff -get database.password config.json")
+		fmt.Fprintln(os.Stderr, "fastfind: -get needs a file: fastfind -get database.password config.json")
 		return exitUsage
 	}
 
 	full, err := filepath.Abs(file)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "ff:", err)
+		fmt.Fprintln(os.Stderr, "fastfind:", err)
 		return exitUsage
 	}
 
 	raw, err := os.ReadFile(full)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "ff:", err)
+		fmt.Fprintln(os.Stderr, "fastfind:", err)
 		return exitUsage
 	}
 
 	value, sensitive, err := redact.Get(raw, path)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "ff: %s: %v\n", path, err)
+		fmt.Fprintf(os.Stderr, "fastfind: %s: %v\n", path, err)
 		return exitNotFound
 	}
 
@@ -87,7 +87,7 @@ func showValue(file, path string, out io.Writer) int {
 		// stderr so it does not contaminate a pipe, because the person may not
 		// have noticed where this output is going.
 		fmt.Fprintf(os.Stderr,
-			"ff: %s looks like a credential — this is now in your terminal history\n", path)
+			"fastfind: %s looks like a credential — this is now in your terminal history\n", path)
 	}
 
 	switch typed := value.(type) {

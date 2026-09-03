@@ -1,16 +1,16 @@
 # fastfind
 
-Find files by name, or search inside them, without waiting. Installs as `ff`.
+Find files by name, or search inside them, without waiting. Installs as `fastfind`.
 
 ```
-ff cache.go                       find by name, under the current directory
-ff -g 'func main' -name '*.go'    search file contents, like grep -r
-ff -home '*.pem'                  the whole user profile
+fastfind cache.go                       find by name, under the current directory
+fastfind -g 'func main' -name '*.go'    search file contents, like grep -r
+fastfind -home '*.pem'                  the whole user profile
 ```
 
 Measured against GNU `find` on the same tree, returning the same 165 results:
 
-| | `find` | `ff` |
+| | `find` | `fastfind` |
 |---|---|---|
 | A Go module cache | 11.8s | **1.1s** |
 | A 1.9M-entry user profile | — | **4.2s** (~450k entries/sec) |
@@ -23,7 +23,7 @@ make it the default search in Claude Code.
 ## Install
 
 ```bash
-go install github.com/telebroad/fastfind/cmd/ff@latest
+go install github.com/telebroad/fastfind/cmd/fastfind@latest
 ```
 
 Windows, Linux and macOS. Tested on all three in CI.
@@ -36,7 +36,7 @@ Barely any of it is a cleverer search. It's three things `find` doesn't do.
 CPU-bound: a worker spends nearly all its life blocked inside a directory read,
 using no core at all. Sizing a worker pool to the core count — the reflex for
 compute work — leaves the disk idle waiting on the few workers that happen to be
-runnable. `ff` runs 8 workers per allowed core, because goroutines are cheap
+runnable. `fastfind` runs 8 workers per allowed core, because goroutines are cheap
 enough that a couple of hundred blocked ones cost a few hundred kilobytes of
 stack and nothing else.
 
@@ -64,12 +64,12 @@ a user-profile scan from **36.6s to 4.2s**.
 mean in `grep(1)`:
 
 ```bash
-ff -g 'func main' -name '*.go'    # only inside Go files
-ff -g TODO -i -n                  # ignore case, show line numbers
-ff -g panic -l                    # just the files that panic
-ff -g 'err != nil' -c             # count matching lines per file
-ff -g Deprecated -C 2             # two lines of context either side
-ff -g 'computed(' -F              # a literal, not a regex
+fastfind -g 'func main' -name '*.go'    # only inside Go files
+fastfind -g TODO -i -n                  # ignore case, show line numbers
+fastfind -g panic -l                    # just the files that panic
+fastfind -g 'err != nil' -c             # count matching lines per file
+fastfind -g Deprecated -C 2             # two lines of context either side
+fastfind -g 'computed(' -F              # a literal, not a regex
 ```
 
 The grep runs *inside* the walk, on the goroutine that found each file, so the
@@ -94,10 +94,10 @@ assistant it is worse, because the transcript is stored: a secret that reaches
 the screen has been written down somewhere it will outlive the reason it was
 shown.
 
-`ff` fails **closed**.
+`fastfind` fails **closed**.
 
 ```bash
-ff -json config.json     # every key path, no values
+fastfind -json config.json     # every key path, no values
 ```
 
 ```
@@ -120,15 +120,15 @@ absence of one. Everything else becomes a type and a length. Numbers are
 redacted too, which looks over-cautious until you remember that account numbers
 and PINs are numbers.
 
-It composes with the finder, so `ff -json` with no argument describes every
+It composes with the finder, so `fastfind -json` with no argument describes every
 JSON file below you — 6,930 keys across a project in 72ms.
 
 ### Getting one value on purpose
 
 ```bash
-ff -get database.host config.json      # db.internal
-ff -get 'api.endpoints[1]' config.json # array indexing works
-ff -get database.password config.json  # prints it, and warns you it did
+fastfind -get database.host config.json      # db.internal
+fastfind -get 'api.endpoints[1]' config.json # array indexing works
+fastfind -get database.password config.json  # prints it, and warns you it did
 ```
 
 Separate from `-json` deliberately. Reading the shape of a config is casual and
@@ -137,11 +137,11 @@ keystroke apart.
 
 ### Masking a search
 
-`ff -g password` over a config file would print the line, secret included. `-mask`
+`fastfind -g password` over a config file would print the line, secret included. `-mask`
 keeps the keys and hides the values:
 
 ```bash
-ff -g 'password|token' -mask config.json
+fastfind -g 'password|token' -mask config.json
 ```
 
 ```
@@ -198,8 +198,8 @@ Skipped unless `-all`: `node_modules`, `.git`, `.angular`, `.next`, `.nuxt`,
 Exit status follows grep — 0 found, 1 not found, 2 bad usage — so it composes:
 
 ```bash
-ff -q -f '*.pem' && echo "keys present"
-ff -0 -q '*.tmp' | xargs -0 rm
+fastfind -q -f '*.pem' && echo "keys present"
+fastfind -0 -q '*.tmp' | xargs -0 rm
 ```
 
 ## Politeness

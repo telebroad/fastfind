@@ -1,8 +1,8 @@
-# The built binary. Anchored with a leading slash, or the bare name `ff` also
-# matches the cmd/ff DIRECTORY and quietly excludes the whole command from the
+# The built binary. Anchored with a leading slash, or the bare name also
+# matches the cmd DIRECTORY and quietly excludes the whole command from the
 # repository.
-/ff
-/ff.exe
+/fastfind
+/fastfind.exe
 /dist/
 
 # Go
