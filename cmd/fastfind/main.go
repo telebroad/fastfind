@@ -138,7 +138,7 @@ func run() int {
 		showVersion = flag.Bool("version", false, "print the version and exit")
 	)
 	flag.Usage = func() { fmt.Fprint(os.Stderr, usage) }
-	flag.Parse()
+	flag.CommandLine.Parse(permute(os.Args[1:], flag.CommandLine))
 
 	// Answered before anything else can fail. "What am I running?" is usually
 	// asked *because* something else has already gone wrong, so it must not
