@@ -1,8 +1,14 @@
 # The built binary. Anchored with a leading slash, or the bare name also
 # matches the cmd DIRECTORY and quietly excludes the whole command from the
 # repository.
+# Built binaries. Anchored with a leading slash so the name cannot also match a
+# directory. Both names are listed: the old one stays here so that a stale
+# ff.exe left over from before the rename can never be committed by accident —
+# which is exactly what happened the moment this line was changed.
 /fastfind
 /fastfind.exe
+/ff
+/ff.exe
 /dist/
 
 # Go
